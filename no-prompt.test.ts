@@ -1,5 +1,5 @@
-import { execute as registerExecute } from './register';
-import { execute as testExecute } from './index';
+import { execute as whenExecuteRegister } from './register';
+import { execute as whenExecuteIndex } from './index';
 import { afterAll, afterEach, describe, expect, jest, test } from '@jest/globals';
 
 jest.mock(
@@ -36,18 +36,22 @@ describe('No prompts', () => {
     });
     
     test('should stop testing if prompts are empty', async () => {
+        // given
         const spy = jest.spyOn(console, 'log');
     
-        await testExecute();
+        await whenExecuteIndex();
         
+        // then
         expect(spy).toHaveBeenCalledWith('Either project name or password input was empty. Please try again!');
     });
 
     test('should stop registering if prompts are empty', async () => {
+        // given
         const spy = jest.spyOn(console, 'log');
     
-        await registerExecute();
+        await whenExecuteRegister();
         
+        // then
         expect(spy).toHaveBeenCalledWith('Either project name or password input was empty. Please try again!');
     });
 });

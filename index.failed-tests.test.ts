@@ -28,7 +28,23 @@ jest.mock(
     { virtual: true }
 );
 
-describe('index.ts', () => {
+const givenMockAxios = () => {
+    mockedAxios.post.mockResolvedValueOnce({
+        data: 'Upload was successful!'
+    });
+}
+
+const givenMockCacheRead = () => {
+    jest.doMock(
+        `${__dirname}/credentials.json`,
+        () => ({ projectname: 'asd', password: 'asd' }),
+        { virtual: true }
+    );
+}
+
+const whenExecuteIndex = async () => await execute();
+
+describe('index.ts with failed test cases', () => {
     afterEach(() => {
         jest.clearAllMocks();
         jest.restoreAllMocks();
@@ -39,20 +55,15 @@ describe('index.ts', () => {
     });
 
     test('should successfully upload result with zeros when tests fail', async () => {
-        mockedAxios.post.mockResolvedValueOnce({
-            data: 'Upload was successful!'
-        });
-        jest.doMock(
-            `${__dirname}/credentials.json`,
-            () => ({ projectname: 'asd', password: 'asd' }),
-            { virtual: true }
-        );
-
+        // given
         const spy = jest.spyOn(console, 'log');
         const axiosSpy = jest.spyOn(mockedAxios, 'post');
+        givenMockAxios();
+        givenMockCacheRead()
     
-        await execute();
+        await whenExecuteIndex()
         
+        // then
         expect(axiosSpy).toHaveBeenCalledWith(
             "https://jaf5lbsxlfuxjnycra72m2jfoq0srzqk.lambda-url.eu-central-1.on.aws/",
             "{\"password\":\"asd\",\"testCoverage\":{\"unit\":0,\"component\":0,\"integration\":0,\"e2e\":0}}", 

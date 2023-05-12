@@ -22,6 +22,24 @@ jest.mock(
     { virtual: true }
 );
 
+jest.mock(
+    `${__dirname}/credentials.json`,
+    () => ({}),
+    { virtual: true }
+);
+
+const givenMockAxiosResponse = (rejected = false) => {
+    if (rejected) {
+        mockedAxios.post.mockRejectedValueOnce({ response: { data: 'Upload failed!' }});
+    } else {
+        mockedAxios.post.mockResolvedValueOnce({
+            data: 'Registration was successful!'
+        });
+    }
+};
+
+const whenExecuteRegister = async () => await execute();
+
 describe('register.ts', () => {
     afterEach(() => {
         jest.clearAllMocks();
@@ -33,36 +51,25 @@ describe('register.ts', () => {
     });
     
     test('should successfully upload with prompted credentials', async () => {
-        jest.mock(
-            `${__dirname}/credentials.json`,
-            () => ({}),
-            { virtual: true }
-        );
-        mockedAxios.post.mockResolvedValueOnce({
-            data: 'Registration was successful!'
-        });
-
+        // given
         const spy = jest.spyOn(console, 'log');
-    
-        await execute();
+        givenMockAxiosResponse();
+
+        await whenExecuteRegister();
         
+        // then
         expect(spy).toHaveBeenCalledWith('Credentials are now cached!');
         expect(spy).toHaveBeenCalledWith('Registration operation was successful!');
     });
 
     test('should log error if upload fails', async () => {
-        jest.doMock(
-            `${__dirname}/credentials.json`,
-            () => ({}),
-            { virtual: true }
-        );
-
-        mockedAxios.post.mockRejectedValueOnce({ response: { data: 'Upload failed!' }});
-
+        // given
         const spy = jest.spyOn(console, 'log');
+        givenMockAxiosResponse(true)
     
-        await execute();
+        await whenExecuteRegister();
         
+        // then
         expect(spy).toHaveBeenCalledWith('Upload failed!');
         expect(spy).toHaveBeenCalledWith('Operation failed!');
     });

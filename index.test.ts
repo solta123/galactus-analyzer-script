@@ -1,6 +1,8 @@
 import { execute } from './index';
 import { afterAll, afterEach, describe, expect, jest, test } from '@jest/globals';
 import axios from "axios";
+import { SpiedFunction } from 'jest-mock';
+import { beforeEach } from 'node:test';
 
 jest.mock("axios");
 const mockedAxios = axios as jest.Mocked<typeof axios>;
@@ -37,6 +39,26 @@ jest.mock(
     { virtual: true }
 );
 
+const givenMockAxiosResponse = (rejected = false) => {
+    if (rejected) {
+        mockedAxios.post.mockRejectedValueOnce({ response: { data: 'Upload failed!' }});
+    } else {
+        mockedAxios.post.mockResolvedValueOnce({
+            data: 'Upload was successful!'
+        });
+    }
+};
+
+const givenMockCacheRead = (mockFunction: () => void) => {
+    jest.doMock(
+        `${__dirname}/credentials.json`,
+        mockFunction,
+        { virtual: true }
+    )
+}
+
+const whenExecuteIndex = async () => await execute();
+
 describe('index.ts', () => {
     afterEach(() => {
         jest.clearAllMocks();
@@ -48,23 +70,21 @@ describe('index.ts', () => {
     });
 
     test('should successfully upload with prompted credentials', async () => {
-        mockedAxios.post.mockResolvedValueOnce({
-            data: 'Upload was successful!'
-        });
-        jest.doMock(
-            `${__dirname}/credentials.json`,
-            () => { throw Error() },
-            { virtual: true }
+        // given
+        const logSpy = jest.spyOn(console, 'log');
+        const axiosSpy = jest.spyOn(mockedAxios, 'post');
+        givenMockAxiosResponse();
+        givenMockCacheRead(
+            () => { throw Error() }
         );
 
-        const spy = jest.spyOn(console, 'log');
-        const axiosSpy = jest.spyOn(mockedAxios, 'post');
        
-        await execute();
+        await whenExecuteIndex();
         
-        expect(spy).toHaveBeenCalledWith('Credentials cache reading failed. Please enter your sign in data again!');
-        expect(spy).toHaveBeenCalledWith('Credentials are now cached!');
-        expect(spy).toHaveBeenCalledWith('Operation was successful! YAY!');
+        // then
+        expect(logSpy).toHaveBeenCalledWith('Credentials cache reading failed. Please enter your sign in data again!');
+        expect(logSpy).toHaveBeenCalledWith('Credentials are now cached!');
+        expect(logSpy).toHaveBeenCalledWith('Operation was successful! YAY!');
         expect(axiosSpy).toHaveBeenCalledWith(
             "https://jaf5lbsxlfuxjnycra72m2jfoq0srzqk.lambda-url.eu-central-1.on.aws/",
             "{\"projectName\":\"asd\",\"password\":\"asd\",\"testCoverage\":{\"unit\":1,\"component\":1,\"integration\":1,\"e2e\":1}}", 
@@ -73,23 +93,20 @@ describe('index.ts', () => {
     });
 
     test('should successfully upload with cached credentials', async () => {
-        mockedAxios.post.mockResolvedValueOnce({
-            data: 'Upload was successful!'
-        });
-        jest.doMock(
-            `${__dirname}/credentials.json`,
-            () => ({ projectName: 'asd', password: 'asd' }),
-            { virtual: true }
-        );
-
-        const spy = jest.spyOn(console, 'log');
+        // given
+        const logSpy = jest.spyOn(console, 'log');
         const axiosSpy = jest.spyOn(mockedAxios, 'post');
+        givenMockAxiosResponse();
+        givenMockCacheRead(
+            () => ({ projectName: 'asd', password: 'asd' })
+        );
     
-        await execute();
+        await whenExecuteIndex()
         
-        expect(spy).toHaveBeenCalledWith('Credentials provided by cache!');
-        expect(spy).not.toHaveBeenCalledWith('Credentials are now cached!');
-        expect(spy).toHaveBeenCalledWith('Operation was successful! YAY!');
+        // then
+        expect(logSpy).toHaveBeenCalledWith('Credentials provided by cache!');
+        expect(logSpy).not.toHaveBeenCalledWith('Credentials are now cached!');
+        expect(logSpy).toHaveBeenCalledWith('Operation was successful! YAY!');
         expect(axiosSpy).toHaveBeenCalledWith(
             "https://jaf5lbsxlfuxjnycra72m2jfoq0srzqk.lambda-url.eu-central-1.on.aws/",
             "{\"projectName\":\"asd\",\"password\":\"asd\",\"testCoverage\":{\"unit\":1,\"component\":1,\"integration\":1,\"e2e\":1}}", 
@@ -98,18 +115,17 @@ describe('index.ts', () => {
     });
 
     test('should fail upload if http request throws error', async () => {
-        mockedAxios.post.mockRejectedValueOnce({ response: { data: 'Upload failed!' }});
-        jest.doMock(
-            `${__dirname}/credentials.json`,
-            () => ({ projectName: 'asd', password: 'asd' }),
-            { virtual: true }
+        // given
+        const logSpy = jest.spyOn(console, 'log');
+        givenMockAxiosResponse(true);
+        givenMockCacheRead(
+            () => ({ projectName: 'asd', password: 'asd' })
         );
 
-        const spy = jest.spyOn(console, 'log');
-    
-        await execute();
+        await whenExecuteIndex();
         
-        expect(spy).toHaveBeenCalledWith('Credentials provided by cache!');
-        expect(spy).toHaveBeenCalledWith('Operation failed during result uploading process with the following response: Upload failed!');
+        // then
+        expect(logSpy).toHaveBeenCalledWith('Credentials provided by cache!');
+        expect(logSpy).toHaveBeenCalledWith('Operation failed during result uploading process with the following response: Upload failed!');
     });
 });
