@@ -55,8 +55,6 @@ const uploadEndResult = async (endResult: Partial<GalactusResultObject>) => {
         }
     };
 
-    console.log(JSON.stringify(payload))
-
     try {
         const response = await axios.post(
             'https://jaf5lbsxlfuxjnycra72m2jfoq0srzqk.lambda-url.eu-central-1.on.aws/',
