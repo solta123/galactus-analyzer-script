@@ -1,8 +1,6 @@
 import { execute } from './index';
 import { afterAll, afterEach, describe, expect, jest, test } from '@jest/globals';
 import axios from "axios";
-import { SpiedFunction } from 'jest-mock';
-import { beforeEach } from 'node:test';
 
 jest.mock("axios");
 const mockedAxios = axios as jest.Mocked<typeof axios>;
