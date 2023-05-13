@@ -52,25 +52,25 @@ describe('register.ts', () => {
     
     test('should successfully upload with prompted credentials', async () => {
         // given
-        const spy = jest.spyOn(console, 'log');
+        const logSpy = jest.spyOn(console, 'log');
         givenSuccessfulAxiosRequest();
 
         await whenExecuteRegister();
         
         // then
-        expect(spy).toHaveBeenCalledWith('Credentials are now cached!');
-        expect(spy).toHaveBeenCalledWith('Registration operation was successful!');
+        expect(logSpy).toHaveBeenCalledWith('Credentials are now cached!');
+        expect(logSpy).toHaveBeenCalledWith('Registration operation was successful!');
     });
 
     test('should log error if upload fails', async () => {
         // given
-        const spy = jest.spyOn(console, 'log');
+        const logSpy = jest.spyOn(console, 'log');
         givenRejectedAxiosRequest();
     
         await whenExecuteRegister();
         
         // then
-        expect(spy).toHaveBeenCalledWith('Upload failed!');
-        expect(spy).toHaveBeenCalledWith('Operation failed!');
+        expect(logSpy).toHaveBeenCalledWith('Upload failed!');
+        expect(logSpy).toHaveBeenCalledWith('Operation failed!');
     });
 });
