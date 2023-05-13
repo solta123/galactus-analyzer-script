@@ -37,23 +37,31 @@ jest.mock(
     { virtual: true }
 );
 
-const givenMockAxiosResponse = (rejected = false) => {
-    if (rejected) {
-        mockedAxios.post.mockRejectedValueOnce({ response: { data: 'Upload failed!' }});
-    } else {
-        mockedAxios.post.mockResolvedValueOnce({
-            data: 'Upload was successful!'
-        });
-    }
+const givenSuccessfulAxiosRequest = () => {
+    mockedAxios.post.mockResolvedValueOnce({
+        data: 'Upload was successful!'
+    });
 };
 
-const givenMockCacheRead = (mockFunction: () => void) => {
+const givenRejectedAxiosRequest = () => {
+    mockedAxios.post.mockRejectedValueOnce({ response: { data: 'Upload failed!' }});
+};
+
+const givenSuccessfulCacheRead = () => {
     jest.doMock(
         `${__dirname}/credentials.json`,
-        mockFunction,
+        () => ({ projectName: 'asd', password: 'asd' }),
         { virtual: true }
     )
-}
+};
+
+const givenRejectedCacheRead = () => {
+    jest.doMock(
+        `${__dirname}/credentials.json`,
+        () => { throw Error() },
+        { virtual: true }
+    )
+};
 
 const whenExecuteIndex = async () => await execute();
 
@@ -71,11 +79,8 @@ describe('index.ts', () => {
         // given
         const logSpy = jest.spyOn(console, 'log');
         const axiosSpy = jest.spyOn(mockedAxios, 'post');
-        givenMockAxiosResponse();
-        givenMockCacheRead(
-            () => { throw Error() }
-        );
-
+        givenSuccessfulAxiosRequest();
+        givenRejectedCacheRead();
        
         await whenExecuteIndex();
         
@@ -94,10 +99,8 @@ describe('index.ts', () => {
         // given
         const logSpy = jest.spyOn(console, 'log');
         const axiosSpy = jest.spyOn(mockedAxios, 'post');
-        givenMockAxiosResponse();
-        givenMockCacheRead(
-            () => ({ projectName: 'asd', password: 'asd' })
-        );
+        givenSuccessfulAxiosRequest();
+        givenSuccessfulCacheRead();
     
         await whenExecuteIndex()
         
@@ -115,10 +118,8 @@ describe('index.ts', () => {
     test('should fail upload if http request throws error', async () => {
         // given
         const logSpy = jest.spyOn(console, 'log');
-        givenMockAxiosResponse(true);
-        givenMockCacheRead(
-            () => ({ projectName: 'asd', password: 'asd' })
-        );
+        givenRejectedAxiosRequest();
+        givenSuccessfulCacheRead();
 
         await whenExecuteIndex();
         

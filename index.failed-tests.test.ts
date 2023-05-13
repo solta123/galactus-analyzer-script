@@ -28,13 +28,13 @@ jest.mock(
     { virtual: true }
 );
 
-const givenMockAxios = () => {
+const givenSuccessfulAxiosRequest = () => {
     mockedAxios.post.mockResolvedValueOnce({
         data: 'Upload was successful!'
     });
 }
 
-const givenMockCacheRead = () => {
+const givenSuccessfulCacheRead = () => {
     jest.doMock(
         `${__dirname}/credentials.json`,
         () => ({ projectname: 'asd', password: 'asd' }),
@@ -58,10 +58,10 @@ describe('index.ts with failed test cases', () => {
         // given
         const spy = jest.spyOn(console, 'log');
         const axiosSpy = jest.spyOn(mockedAxios, 'post');
-        givenMockAxios();
-        givenMockCacheRead()
+        givenSuccessfulAxiosRequest();
+        givenSuccessfulCacheRead();
     
-        await whenExecuteIndex()
+        await whenExecuteIndex();
         
         // then
         expect(axiosSpy).toHaveBeenCalledWith(

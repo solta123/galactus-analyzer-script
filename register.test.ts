@@ -28,14 +28,14 @@ jest.mock(
     { virtual: true }
 );
 
-const givenMockAxiosResponse = (rejected = false) => {
-    if (rejected) {
-        mockedAxios.post.mockRejectedValueOnce({ response: { data: 'Upload failed!' }});
-    } else {
-        mockedAxios.post.mockResolvedValueOnce({
-            data: 'Registration was successful!'
-        });
-    }
+const givenSuccessfulAxiosRequest = () => {
+    mockedAxios.post.mockResolvedValueOnce({
+        data: 'Registration was successful!'
+    });
+};
+
+const givenRejectedAxiosRequest = () => {
+    mockedAxios.post.mockRejectedValueOnce({ response: { data: 'Upload failed!' }});
 };
 
 const whenExecuteRegister = async () => await execute();
@@ -53,7 +53,7 @@ describe('register.ts', () => {
     test('should successfully upload with prompted credentials', async () => {
         // given
         const spy = jest.spyOn(console, 'log');
-        givenMockAxiosResponse();
+        givenSuccessfulAxiosRequest();
 
         await whenExecuteRegister();
         
@@ -65,7 +65,7 @@ describe('register.ts', () => {
     test('should log error if upload fails', async () => {
         // given
         const spy = jest.spyOn(console, 'log');
-        givenMockAxiosResponse(true)
+        givenRejectedAxiosRequest();
     
         await whenExecuteRegister();
         
